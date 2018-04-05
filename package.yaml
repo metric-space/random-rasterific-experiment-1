@@ -35,6 +35,8 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - randomRasterificExperiment1
+    - JuicyPixels
+    - Rasterific
 
 tests:
   randomRasterificExperiment1-test:
