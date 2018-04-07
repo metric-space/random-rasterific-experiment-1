@@ -7,6 +7,10 @@ import Codec.Picture
 import Graphics.Rasterific
 import Graphics.Rasterific.Texture
 
+import System.Environment
+
+
+
 
 fileNames :: [String]
 fileNames = ["gintoki.jpg", "gintoki2.jpg"]
@@ -45,11 +49,14 @@ roughSketch x = let (mainPicture:overlay:_) = x
                                                >> myDrawImage updatedTexture mw mh)
                                                 
                  
-
 main :: IO ()
 main = do
-  output <- (getPictureFiles fileNames)
-  case (makeSurePngFiles <$> output) of 
-    Left msg -> putStrLn . ("Error "++) $ msg 
-    Right x -> (writePng "yourimage.png" . roughSketch) $ x
+  args <- getArgs
+  if length args /= 3
+    then putStrLn "Error: 3 args required:  mainFileName layerImageFileName outFileName "
+    else do
+           output <- getPictureFiles . init $ args 
+           case (makeSurePngFiles <$> output) of 
+                Left msg -> putStrLn . ("Error "++) $ msg 
+                Right x -> (writePng (last args) . roughSketch) $ x
 
