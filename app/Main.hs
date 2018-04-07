@@ -2,17 +2,26 @@ module Main where
 
 import Lib
 
+import Control.Monad ((<=<))
 import Codec.Picture
 import Graphics.Rasterific
 import Graphics.Rasterific.Texture
 
 
 fileNames :: [String]
-fileNames = ["gintoki.png", "gintoki2.png"]
+fileNames = ["gintoki.jpg", "gintoki2.jpg"]
 
 
 upperCorner :: Point  -- Point is a type synonym for V2 Float
 upperCorner = V2 0 0
+
+
+whiteBG ::  PixelRGBA8
+whiteBG = PixelRGBA8 255 255 255 255
+
+
+myDrawImage :: Image a -> Float -> Float -> Drawing a ()
+myDrawImage image w h = drawImageAtSize image 0 upperCorner w h
 
 
 setAlphaChannel :: Integer -> Image PixelRGBA8 -> Image PixelRGBA8
@@ -20,30 +29,27 @@ setAlphaChannel alpha = pixelMap $ \(PixelRGBA8 x y z _) -> PixelRGBA8 x y z (fr
 
 
 getPictureFiles :: [String] -> IO (Either String [DynamicImage])
-getPictureFiles fileNames = (sequenceA . (map readImage) $ fileNames) >>= (return . sequenceA)
+getPictureFiles =  return . sequenceA <=< (traverse readImage)  
  
 
-makeSurePngFile :: DynamicImage -> Either String (Image PixelRGBA8)
-makeSurePngFile imageFile = case imageFile of 
-                              (ImageRGBA8 x) -> Right x 
-                              _ -> Left "Not a png file ... "
-
-
-makeSurePngFiles :: [DynamicImage] -> Either String [Image PixelRGBA8]
-makeSurePngFiles = sequenceA . (map makeSurePngFile)
+makeSurePngFiles :: [DynamicImage] -> [Image PixelRGBA8]
+makeSurePngFiles = fmap convertRGBA8
 
 
 roughSketch :: [Image PixelRGBA8] -> Image PixelRGBA8
-roughSketch x = let white = PixelRGBA8 255 255 255 255 
-                    (mainPicture:overlay:_) = x 
-                    updatedTexture = setAlphaChannel 50 overlay
-                in renderDrawing 600 600 white (drawImageAtSize mainPicture 0 upperCorner 600 600 
-                                              >> drawImageAtSize updatedTexture 0 upperCorner 600 600)
+roughSketch x = let (mainPicture:overlay:_) = x 
+                    updatedTexture = setAlphaChannel 128 overlay
+                    Image w h _  = mainPicture
+                    mw:mh:_      = fmap toEnum [w,h]
+                in renderDrawing w h whiteBG $ (myDrawImage mainPicture mw mh 
+                                               >> myDrawImage updatedTexture mw mh)
+                                                
                  
+
 main :: IO ()
 main = do
   output <- (getPictureFiles fileNames)
-  case (output >>= makeSurePngFiles) of 
+  case (makeSurePngFiles <$> output) of 
     Left msg -> putStrLn . ("Error "++) $ msg 
     Right x -> (writePng "yourimage.png" . roughSketch) $ x
 
