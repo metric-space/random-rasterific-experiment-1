@@ -6,10 +6,7 @@ import Control.Monad ((<=<))
 import Codec.Picture
 import Graphics.Rasterific
 import Graphics.Rasterific.Texture
-
 import System.Environment
-
-
 
 
 fileNames :: [String]
@@ -47,16 +44,18 @@ roughSketch x = let (mainPicture:overlay:_) = x
                     mw:mh:_      = fmap toEnum [w,h]
                 in renderDrawing w h whiteBG $ (myDrawImage mainPicture mw mh 
                                                >> myDrawImage updatedTexture mw mh)
+
+realMain :: [String] -> IO ()
+realMain args = do 
+  output <- getPictureFiles . init $ args 
+  case (makeSurePngFiles <$> output) of 
+    Left msg -> putStrLn . ("Error "++) $ msg 
+    Right x -> (writePng (last args) . roughSketch) $ x
                                                 
-                 
 main :: IO ()
 main = do
   args <- getArgs
   if length args /= 3
     then putStrLn "Error: 3 args required:  mainFileName layerImageFileName outFileName "
-    else do
-           output <- getPictureFiles . init $ args 
-           case (makeSurePngFiles <$> output) of 
-                Left msg -> putStrLn . ("Error "++) $ msg 
-                Right x -> (writePng (last args) . roughSketch) $ x
+    else realMain args
 
