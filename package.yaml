@@ -21,6 +21,8 @@ description:         Please see the README on Github at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- JuicyPixels
+- Rasterific
 
 library:
   source-dirs: src
@@ -35,8 +37,6 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - randomRasterificExperiment1
-    - JuicyPixels
-    - Rasterific
 
 tests:
   randomRasterificExperiment1-test:
